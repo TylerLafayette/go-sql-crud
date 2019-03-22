@@ -1,5 +1,5 @@
 # go-sql-crud
-[![GoDoc](https://godoc.org/github.com/TylerLafayette/go-sql-crud?status.svg)](https://godoc.org/github.com/TylerLafayette/go-sql-crud)
+[![GoDoc](https://godoc.org/github.com/TylerLafayette/go-sql-crud?status.svg)](https://godoc.org/github.com/TylerLafayette/go-sql-crud)  
 🗄 quickly create simple crud style apis in go
 
 ```go
