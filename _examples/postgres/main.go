@@ -1,4 +1,4 @@
-package examples
+package postgres
 
 import (
 	"database/sql"
@@ -7,10 +7,12 @@ import (
 	"net/http"
 
 	sqlcrud "github.com/TylerLafayette/go-sql-crud"
+	// Postgres driver
+	_ "github.com/lib/pq"
 )
 
 func main() {
-	db, err := sql.Open("mysql", "username:password@tcp(127.0.0.1:3306)/test")
+	db, err := sql.Open("postgres", "user=tyler dbname=tyler ssl-mode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,6 +22,7 @@ func main() {
 	}
 
 	http.HandleFunc("/getUser", o.GetRow(sqlcrud.Options{
+		Mode: "GET",
 		QueryFields: []sqlcrud.Field{
 			sqlcrud.Field{
 				Name: "username",
@@ -35,13 +38,13 @@ func main() {
 		},
 		Fields: []sqlcrud.Field{
 			sqlcrud.Field{
-				Name: "userId",
+				Name: "id",
 			},
 			sqlcrud.Field{
 				Name: "username",
 			},
 			sqlcrud.Field{
-				Name: "fullName",
+				Name: "preferences",
 			},
 		},
 	}))
