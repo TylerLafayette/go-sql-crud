@@ -36,13 +36,13 @@ func main() {
 		QueryFields: []sqlcrud.Field{
 			sqlcrud.Field{
 				Name: "username",
-				Validator: func(i string) (string, error) {
+				Validator: func(i interface{}) error {
 					if len(i) < 4 || len(i) > 56 {
 						// If the username is too short or too long, return an error to stop the request.
-						return i, errors.New("username invalid")
+						return errors.New("username invalid")
 					}
 
-					return i, nil
+					return nil
 				},
 			},
 		},
