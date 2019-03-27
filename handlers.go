@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strings"
+
+	sq "github.com/Masterminds/squirrel"
 )
 
 // Init contains a configuration for the database connection.
@@ -79,7 +82,7 @@ func (i *Init) GetRow(o Options) func(w http.ResponseWriter, r *http.Request) {
 			q = postParameters(r)
 		}
 
-		var query map[string]interface{}
+		query := map[string]interface{}{}
 		// Iterate through the QueryFields.
 		for _, f := range o.QueryFields {
 			// See if the user sent the correct values.
@@ -120,6 +123,68 @@ func (i *Init) GetRow(o Options) func(w http.ResponseWriter, r *http.Request) {
 
 			query[f.Name] = value
 		}
+
+		selection := []string{}
+		for _, v := range o.Fields {
+			selection = append(selection, v.Name)
+		}
+
+		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+		queryBuilder := psql.Select(strings.Join(selection, ",")).From(o.Table).Where(query)
+
+		rows, err := queryBuilder.RunWith(i.Database).Query()
+		if err != nil {
+			httpWrite(w, Response{
+				Code:    500,
+				Message: err.Error(),
+			})
+			return
+		}
+		cols, _ := rows.Columns()
+
+		output := []map[string]interface{}{}
+		for rows.Next() {
+			// Thanks: https://kylewbanks.com/blog/query-result-to-map-in-golang
+			columns := make([]interface{}, len(cols))
+			columnPointers := make([]interface{}, len(cols))
+			for i := range columns {
+				columnPointers[i] = &columns[i]
+			}
+
+			// Scan the result into the column pointers...
+			if err := rows.Scan(columnPointers...); err != nil {
+				httpWrite(w, Response{
+					Code:    500,
+					Message: err.Error(),
+				})
+				return
+			}
+
+			// Create our map, and retrieve the value for each column from the pointers slice,
+			// storing it in the map with the name of the column as the key.
+			m := map[string]interface{}{}
+			for i, colName := range cols {
+				val := columnPointers[i].(*interface{})
+				m[colName] = *val
+			}
+
+			output = append(output, m)
+		}
+
+		if len(output) < 1 {
+			httpWrite(w, Response{
+				Code:    422,
+				Message: "no results found",
+			})
+			return
+		}
+
+		httpWrite(w, Response{
+			Code:    200,
+			Message: "success",
+			Data:    output,
+		})
+		return
 	}
 
 }
