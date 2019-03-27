@@ -18,6 +18,7 @@ type Init struct {
 type Options struct {
 	Mode        string
 	Table       string
+	Limit       uint64
 	QueryFields []Field
 	Fields      []Field
 }
@@ -131,6 +132,9 @@ func (i *Init) GetRow(o Options) func(w http.ResponseWriter, r *http.Request) {
 
 		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 		queryBuilder := psql.Select(strings.Join(selection, ",")).From(o.Table).Where(query)
+		if o.Limit > 0 {
+			queryBuilder = queryBuilder.Limit(o.Limit)
+		}
 
 		rows, err := queryBuilder.RunWith(i.Database).Query()
 		if err != nil {
