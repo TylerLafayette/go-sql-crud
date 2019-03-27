@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	db, err := sql.Open("postgres", "user=tyler dbname=tyler ssl-mode=disable")
+	db, err := sql.Open("postgres", "user=tyler dbname=tyler sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
