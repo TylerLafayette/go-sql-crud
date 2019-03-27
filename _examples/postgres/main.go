@@ -22,7 +22,8 @@ func main() {
 	}
 
 	http.HandleFunc("/getUser", o.GetRow(sqlcrud.Options{
-		Mode: "GET",
+		Mode:  "GET",
+		Table: "users",
 		QueryFields: []sqlcrud.Field{
 			sqlcrud.Field{
 				Name: "username",

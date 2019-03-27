@@ -14,6 +14,7 @@ type Init struct {
 // Options contains options for a single handler.
 type Options struct {
 	Mode        string
+	Table       string
 	QueryFields []Field
 	Fields      []Field
 }
@@ -78,6 +79,7 @@ func (i *Init) GetRow(o Options) func(w http.ResponseWriter, r *http.Request) {
 			q = postParameters(r)
 		}
 
+		var query map[string]interface{}
 		// Iterate through the QueryFields.
 		for _, f := range o.QueryFields {
 			// See if the user sent the correct values.
@@ -91,23 +93,33 @@ func (i *Init) GetRow(o Options) func(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			err := f.Validator(value)
-			if err != nil {
-				httpWrite(w, Response{
-					Code:    422,
-					Message: err.Error(),
-				})
-				return
+			// Check the value using the Validator.
+			if f.Validator != nil {
+				err := f.Validator(value)
+				if err != nil {
+					httpWrite(w, Response{
+						Code:    422,
+						Message: err.Error(),
+					})
+					return
+				}
 			}
 
-			value, err = f.Formatter(value)
-			if err != nil {
-				httpWrite(w, Response{
-					Code:    422,
-					Message: err.Error(),
-				})
-				return
+			// Format the value using the Formatter.
+			if f.Formatter != nil {
+				var err error
+				value, err = f.Formatter(value)
+				if err != nil {
+					httpWrite(w, Response{
+						Code:    422,
+						Message: err.Error(),
+					})
+					return
+				}
 			}
+
+			query[f.Name] = value
 		}
 	}
+
 }
