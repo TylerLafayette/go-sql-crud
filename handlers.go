@@ -22,8 +22,8 @@ type Options struct {
 type Field struct {
 	InputName string
 	Name      string
-	Validator func(string) (string, error)
-	Formatter func(string) (string, error)
+	Validator func(interface{}) error
+	Formatter func(interface{}) (interface{}, error)
 }
 
 // Response defines a single response.
@@ -81,11 +81,30 @@ func (i *Init) GetRow(o Options) func(w http.ResponseWriter, r *http.Request) {
 		// Iterate through the QueryFields.
 		for _, f := range o.QueryFields {
 			// See if the user sent the correct values.
-			if value, ok := q[f.Name]; !ok || value == nil || len(value.(string)) == 0 {
+			value, ok := q[f.Name]
+			if !ok || value == nil || len(value.(string)) == 0 {
 				// Send a response.
 				httpWrite(w, Response{
 					Code:    422,
 					Message: f.Name + " is missing",
+				})
+				return
+			}
+
+			err := f.Validator(value)
+			if err != nil {
+				httpWrite(w, Response{
+					Code:    422,
+					Message: err.Error(),
+				})
+				return
+			}
+
+			value, err = f.Formatter(value)
+			if err != nil {
+				httpWrite(w, Response{
+					Code:    422,
+					Message: err.Error(),
 				})
 				return
 			}
