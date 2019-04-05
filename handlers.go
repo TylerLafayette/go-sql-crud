@@ -1,18 +1,12 @@
 package sqlcrud
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 )
-
-// Init contains a configuration for the database connection.
-type Init struct {
-	Database *sql.DB
-}
 
 // Options contains options for a single handler.
 type Options struct {
