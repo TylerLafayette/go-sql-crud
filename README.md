@@ -11,7 +11,7 @@ This package allows you to easily create super simple CRUD (create, read, update
 ## Usage
 Simply connect to your database, create a configuration, and create an http handler. The example below will create a route to search for a specific user in the dataabse.
 ```go
-package examples
+package main
 
 import (
 	"database/sql"
@@ -20,10 +20,12 @@ import (
 	"net/http"
 
 	sqlcrud "github.com/TylerLafayette/go-sql-crud"
+	// Postgres driver
+	_ "github.com/lib/pq"
 )
 
 func main() {
-	db, err := sql.Open("mysql", "username:password@tcp(127.0.0.1:3306)/test")
+	db, err := sql.Open("postgres", "user=tyler dbname=tyler sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,13 +35,15 @@ func main() {
 	}
 
 	http.HandleFunc("/getUser", o.GetRow(sqlcrud.Options{
-		Mode: "GET",
+		Mode:  "GET",
 		Table: "users",
+		// The Placeholder can be any squirrel (sql query builder) compatible placeholder format
+		Placeholder: sqlcrud.Dollar,
 		QueryFields: []sqlcrud.Field{
 			sqlcrud.Field{
 				Name: "username",
 				Validator: func(i interface{}) error {
-					if len(i) < 4 || len(i) > 56 {
+					if len(i.(string)) < 4 || len(i.(string)) > 56 {
 						// If the username is too short or too long, return an error to stop the request.
 						return errors.New("username invalid")
 					}
@@ -50,13 +54,13 @@ func main() {
 		},
 		Fields: []sqlcrud.Field{
 			sqlcrud.Field{
-				Name: "userId",
+				Name: "id",
 			},
 			sqlcrud.Field{
 				Name: "username",
 			},
 			sqlcrud.Field{
-				Name: "fullName",
+				Name: "preferences",
 			},
 		},
 	}))

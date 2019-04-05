@@ -24,6 +24,8 @@ func main() {
 	http.HandleFunc("/getUser", o.GetRow(sqlcrud.Options{
 		Mode:  "GET",
 		Table: "users",
+		// The Placeholder can be any squirrel (sql query builder) compatible placeholder format
+		Placeholder: sqlcrud.Dollar,
 		QueryFields: []sqlcrud.Field{
 			sqlcrud.Field{
 				Name: "username",

@@ -5,7 +5,15 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Masterminds/squirrel"
 	sq "github.com/Masterminds/squirrel"
+)
+
+var (
+	// Dollar is the SQL format usually used for Postgres.
+	Dollar = sq.Dollar
+	// Question is the SQL format usually used for MySQL.
+	Question = sq.Question
 )
 
 // Options contains options for a single handler.
@@ -13,6 +21,7 @@ type Options struct {
 	Mode        string
 	Table       string
 	Limit       uint64
+	Placeholder squirrel.PlaceholderFormat
 	QueryFields []Field
 	Fields      []Field
 }
@@ -112,8 +121,11 @@ func (i *Init) GetRow(o Options) func(w http.ResponseWriter, r *http.Request) {
 			selection = append(selection, v.Name)
 		}
 
-		psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-		queryBuilder := psql.Select(strings.Join(selection, ",")).From(o.Table).Where(query)
+		sqlQuery := sq.StatementBuilder
+		if o.Placeholder != nil {
+			sqlQuery = sqlQuery.PlaceholderFormat(o.Placeholder)
+		}
+		queryBuilder := sqlQuery.Select(strings.Join(selection, ",")).From(o.Table).Where(query)
 		if o.Limit > 0 {
 			queryBuilder = queryBuilder.Limit(o.Limit)
 		}
